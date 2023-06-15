@@ -1,6 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/node,windows,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,windows,visualstudiocode
-
+node_modules
 ### Node ###
 # Logs
 logs
