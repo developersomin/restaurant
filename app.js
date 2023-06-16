@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const fs = require("fs");
+const uuid = require("uuid");
+const resData = require("./util/restaurant-data")
 
 app.set("views", path.join(__dirname, "views")); //경로를 지정
 app.set("view engine", "ejs"); //view engine을 ejs로 설정
@@ -14,15 +16,26 @@ app.get("/", function (req, res) {
 });
 
 app.get("/restaurants", function (req, res) {
-  const filePath = path.join(__dirname, "data", "restaurants.json");
+  const restaurants = resData.getStoredRestaurants();
 
-  const fileData = fs.readFileSync(filePath); //파일 읽을 수 있음
-  const storedRestaurants = JSON.parse(fileData); //json->자스객체로
 
   res.render("restaurants", {
-    numberOfRestaurants: storedRestaurants.length,
-    restaurants: storedRestaurants,
+    numberOfRestaurants: restaurants.length,
+    restaurants: restaurants,
   });
+});
+
+app.get("/restaurants/:id", function (req, res) {
+  const restaurantId = req.params.id;
+  const restaurants = resData.getStoredRestaurants();
+
+
+  for (const restaurant of restaurants) {
+    if(restaurant.id === restaurantId){
+      return res.render("restaurant-Detail", {restaurant : restaurant})
+    }
+  }
+  res.status(404).render("404");
 });
 
 app.get("/confirm", function (req, res) {
@@ -38,17 +51,24 @@ app.get("/recommend", function (req, res) {
 });
 
 app.post("/recommend", function (req, res) {
-  const restaurants = req.body; //form 가져옴
-  const filePath = path.join(__dirname, "data", "restaurants.json");
+  const restaurant = req.body; //form 가져옴
+  restaurant.id = uuid.v4();
+  const restaurants = resData.getStoredRestaurants();
 
-  const fileData = fs.readFileSync(filePath); //파일 읽을 수 있음
-  const storedRestaurants = JSON.parse(fileData); //json->자스객체로
+  restaurants.push(restaurant); //form에 입력받은 값은 자바스크립트 값으로 들어옴
 
-  storedRestaurants.push(restaurants); //form에 입력받은 값은 자바스크립트 값으로 들어옴
-
-  fs.writeFileSync(filePath, JSON.stringify(storedRestaurants)); //파일에 json 형식으로 바꾸어 파일에 입력함
+  resData.storeRestaurants(restaurants);
 
   res.redirect("/confirm");
 });
+
+app.use((req,res)=>{
+  res.status(404).render('404');
+})
+
+app.use((err,req,res,next)=>{
+  res.status(500).render('500');
+})
+
 
 app.listen(3000);
